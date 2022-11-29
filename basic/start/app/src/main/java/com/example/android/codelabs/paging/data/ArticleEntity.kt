@@ -22,13 +22,10 @@ import java.time.format.DateTimeFormatter
 /**
  * Immutable model class for an article
  */
-data class Article(
+data class ArticleEntity(
     val id: Int,
     val title: String,
     val description: String,
     val created: LocalDateTime,
+    val selected: Boolean = false,
 )
-
-val Article.createdText: String get() = articleDateFormatter.format(created)
-
-private val articleDateFormatter = DateTimeFormatter.ofPattern("dd MMM yyyy")

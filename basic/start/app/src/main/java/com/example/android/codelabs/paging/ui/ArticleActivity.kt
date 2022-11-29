@@ -17,17 +17,21 @@
 package com.example.android.codelabs.paging.ui
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.paging.LoadState
+import androidx.paging.LoadState.Loading
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.android.codelabs.paging.Injection
 import com.example.android.codelabs.paging.databinding.ActivityArticlesBinding
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class ArticleActivity : AppCompatActivity() {
@@ -46,16 +50,27 @@ class ArticleActivity : AppCompatActivity() {
         val items = viewModel.items
         val articleAdapter = ArticleAdapter()
 
-        binding.bindAdapter(articleAdapter = articleAdapter)
+        binding.bindAdapter(articleAdapter)
 
-        // Collect from the Article Flow in the ViewModel, and submit it to the
-        // ListAdapter.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                articleAdapter.loadStateFlow.collect {
+                    Log.i("DBG", "Load state changed: prepend=${it.source.prepend} append=${it.source.append}")
+
+                    binding.initialProgress.isVisible = it.source.refresh is Loading
+                    binding.prependProgress.isVisible = it.source.prepend is Loading
+                    binding.appendProgress.isVisible = it.source.append is Loading
+                }
+            }
+        }
+
+        // Collect from the Article Flow in the ViewModel, and submit it to the ListAdapter.
         lifecycleScope.launch {
             // We repeat on the STARTED lifecycle because an Activity may be PAUSED
             // but still visible on the screen, for example in a multi window app
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                items.collect {
-                    articleAdapter.submitList(it)
+                items.collectLatest {
+                    articleAdapter.submitData(it)
                 }
             }
         }
@@ -66,8 +81,9 @@ class ArticleActivity : AppCompatActivity() {
  * Sets up the [RecyclerView] and binds [ArticleAdapter] to it
  */
 private fun ActivityArticlesBinding.bindAdapter(articleAdapter: ArticleAdapter) {
+    val decoration = DividerItemDecoration(list.context, DividerItemDecoration.VERTICAL)
+
     list.adapter = articleAdapter
     list.layoutManager = LinearLayoutManager(list.context)
-    val decoration = DividerItemDecoration(list.context, DividerItemDecoration.VERTICAL)
     list.addItemDecoration(decoration)
 }

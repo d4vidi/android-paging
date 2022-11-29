@@ -17,12 +17,12 @@
 package com.example.android.codelabs.paging.ui
 
 import androidx.recyclerview.widget.RecyclerView
-import com.example.android.codelabs.paging.data.Article
-import com.example.android.codelabs.paging.data.createdText
+import com.example.android.codelabs.paging.data.ArticleEntity
 import com.example.android.codelabs.paging.databinding.ArticleViewholderBinding
+import com.example.android.codelabs.paging.domain.Article
 
 /**
- * View Holder for a [Article] RecyclerView list item.
+ * View Holder for a [ArticleEntity] RecyclerView list item.
  */
 class ArticleViewHolder(
     private val binding: ArticleViewholderBinding
@@ -33,6 +33,7 @@ class ArticleViewHolder(
             binding.title.text = article.title
             binding.description.text = article.description
             binding.created.text = article.createdText
+            binding.selected.isChecked = article.selected
         }
     }
 }
